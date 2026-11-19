@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ARCADE JUKEBOX 90s - 32" Touch Totem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --neon-pink: #ff007f;
+      --neon-cyan: #00f3ff;
+      --neon-amber: #ffae00;
+      --neon-green: #00ff66;
+      --neon-purple: #b829ff;
+      --bg-dark: #07060e;
+      --panel-bg: #100e1c;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Orbitron', sans-serif;
+      color: #fff;
+    }
+
+    /* CARCASA EXTERIOR CON TUBOS DE LUZ LED 90s (ESTILO WURLITZER) */
+    .jukebox-chassis {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 18px;
+      background: radial-gradient(circle at center, #18132b 0%, #06050b 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Tubos neón perimetrales animados */
+    .led-tube-frame {
+      position: absolute;
+      inset: 6px;
+      border-radius: 28px;
+      padding: 6px;
+      background: linear-gradient(
+        90deg,
+        var(--neon-pink),
+        var(--neon-amber),
+        var(--neon-green),
+        var(--neon-cyan),
+        var(--neon-purple),
+        var(--neon-pink)
+      );
+      background-size: 400% 400%;
+      animation: ledRainbowFlow 6s linear infinite;
+      box-shadow:
+        0 0 25px rgba(255, 0, 127, 0.7),
+        0 0 45px rgba(0, 243, 255, 0.5),
+        inset 0 0 20px rgba(255, 255, 255, 0.6);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .led-tube-frame::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      background: #080710;
+      border-radius: 22px;
+    }
+
+    /* Bombillas LED secuenciales superiores e inferiores */
+    .led-bulbs-row {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 16px;
+      background: linear-gradient(180deg, #272936 0%, #11121a 100%);
+      border: 2px solid #555970;
+      border-radius: 14px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+    }
+
+    .bulb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #333;
+      animation: chaseBulbs 1.2s infinite alternate;
+    }
+    .bulb:nth-child(4n+1) { background: var(--neon-pink); box-shadow: 0 0 12px var(--neon-pink); animation-delay: 0s; }
+    .bulb:nth-child(4n+2) { background: var(--neon-cyan); box-shadow: 0 0 12px var(--neon-cyan); animation-delay: 0.3s; }
+    .bulb:nth-child(4n+3) { background: var(--neon-amber); box-shadow: 0 0 12px var(--neon-amber); animation-delay: 0.6s; }
+    .bulb:nth-child(4n+4) { background: var(--neon-green); box-shadow: 0 0 12px var(--neon-green); animation-delay: 0.9s; }
+
+    .header-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(16px, 2.2vh, 24px);
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #ff3cac, #ffae00, #00f3ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 8px rgba(255, 0, 127, 0.8));
+      text-align: center;
+    }
+
+    /* ============================================================
+       ZONA SUPERIOR (~22" DE 32" -> ~66% ALTURA): PANTALLA DE VIDEO CRT
+       ============================================================ */
+    .video-stage {
+      position: relative;
+      z-index: 20;
+      height: 64%;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(145deg, #2c2f40, #12131c);
+      border: 4px solid #6b708a;
+      border-radius: 24px;
+      padding: 12px;
+      box-shadow:
+        0 0 30px rgba(0, 243, 255, 0.35),
+        inset 0 0 20px #000;
+    }
+
+    /* Marquesina LED superior del televisor */
+    .now-playing-marquee {
+      background: #040408;
+      border: 2px solid var(--neon-cyan);
+      border-radius: 10px;
+      padding: 6px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 0 14px rgba(0, 243, 255, 0.4);
+      overflow: hidden;
+    }
+
+    .badge-live {
+      background: var(--neon-pink);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 10px var(--neon-pink);
+      flex-shrink: 0;
+      margin-right: 12px;
+    }
+
+    .marquee-track {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .marquee-text {
+      display: inline-block;
+      font-family: 'VT323', monospace;
+      font-size: 26px;
+      color: var(--neon-amber);
+      text-shadow: 0 0 10px var(--neon-amber);
+      animation: scrollText 14s linear infinite;
+    }
+
+    /* Pantalla CRT interna */
+    .crt-screen {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      background: #000;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 4px solid #090a0f;
+      box-shadow:
+        inset 0 0 40px rgba(0, 243, 255, 0.25),
+        0 0 20px rgba(184, 41, 255, 0.5);
+    }
+
+    /* Efecto sutil de líneas de escaneo CRT */
+    .crt-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.14) 0px,
+        rgba(0, 0, 0, 0.14) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    video, #yt-player-container, #yt-player-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: contain;
+      background: #000;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Pantalla de bienvenida en reposo */
+    .idle-screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(transparent 65%, rgba(255, 0, 127, 0.25) 100%),
+        repeating-linear-gradient(90deg, rgba(0, 243, 255, 0.08) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(0deg, rgba(0, 243, 255, 0.08) 0 1px, transparent 1px 40px),
+        #070512;
+      text-align: center;
+      padding: 20px;
+      z-index: 2;
+    }
+
+    .idle-screen h2 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 24px;
+      line-height: 1.5;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 15px var(--neon-cyan), 0 0 30px var(--neon-pink);
+      margin-bottom: 16px;
+    }
+
+    .idle-screen p {
+      font-size: 16px;
+      color: var(--neon-amber);
+      text-shadow: 0 0 8px var(--neon-amber);
+    }
+
+    /* ============================================================
+       ZONA INFERIOR (~10" RESTANTES -> ~32% ALTURA): DECK TÁCTIL LED
+       ============================================================ */
+    .touch-deck {
+      position: relative;
+      z-index: 20;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: linear-gradient(180deg, #131124 0%, #0a0914 100%);
+      border: 3px solid var(--neon-purple);
+      border-radius: 22px;
+      padding: 12px;
+      box-shadow: 0 0 25px rgba(184, 41, 255, 0.4);
+      overflow: hidden;
+    }
+
+    /* Ecualizador LED de espectro completo */
+    .equalizer-panel {
+      height: 54px;
+      background: #04040a;
+      border: 2px solid #2e324d;
+      border-radius: 12px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 4px;
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+    }
+
+    .eq-bar {
+      flex: 1;
+      height: 12%;
+      border-radius: 3px 3px 0 0;
+      background: linear-gradient(to top, var(--neon-green) 0%, var(--neon-amber) 60%, var(--neon-pink) 100%);
+      box-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+      transition: height 0.08s ease-out;
+    }
+
+    /* Buscador táctil grande estilo tablet */
+    .search-row {
+      display: flex;
+      gap: 10px;
+      height: 50px;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 100%;
+      background: #070712;
+      border: 2px solid var(--neon-cyan);
+      border-radius: 12px;
+      padding: 0 46px 0 16px;
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      outline: none;
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.3);
+    }
+
+    .search-input::placeholder {
+      color: #6b7899;
+    }
+
+    .btn-clear-search {
+      position: absolute;
+      right: 10px;
+      background: #22253a;
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .btn-search {
+      padding: 0 22px;
+      background: linear-gradient(180deg, #00f3ff 0%, #0088cc 100%);
+      border: none;
+      border-radius: 12px;
+      color: #030712;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 15px;
+      box-shadow: 0 0 16px rgba(0, 243, 255, 0.6);
+      cursor: pointer;
+    }
+
+    .btn-search:active {
+      transform: scale(0.96);
+    }
+
+    /* Pestañas táctiles grandes: Local FydeOS vs YouTube vs Cola */
+    .tabs-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 0.7fr;
+      gap: 10px;
+      height: 46px;
+    }
+
+    .tab-btn {
+      border: 2px solid #353954;
+      background: #141626;
+      color: #9aa3c2;
+      border-radius: 12px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active-local {
+      background: linear-gradient(180deg, #ffae00 0%, #cc6600 100%);
+      border-color: #fff099;
+      color: #000;
+      box-shadow: 0 0 18px rgba(255, 174, 0, 0.75);
+    }
+
+    .tab-btn.active-yt {
+      background: linear-gradient(180deg, #ff0055 0%, #990033 100%);
+      border-color: #ff99bb;
+      color: #fff;
+      box-shadow: 0 0 18px rgba(255, 0, 85, 0.75);
+    }
+
+    .tab-btn.active-queue {
+      background: linear-gradient(180deg, #00ff66 0%, #00993d 100%);
+      border-color: #b3ffd1;
+      color: #000;
+      box-shadow: 0 0 18px rgba(0, 255, 102, 0.75);
+    }
+
+    /* Lista deslizable táctil de canciones */
+    .song-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .song-list::-webkit-scrollbar {
+      width: 8px;
+    }
+    .song-list::-webkit-scrollbar-thumb {
+      background: var(--neon-pink);
+      border-radius: 4px;
+    }
+
+    .song-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(90deg, #16182b 0%, #0d0e1a 100%);
+      border: 2px solid #2d3252;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.1s, border-color 0.15s;
+    }
+
+    .song-card:active {
+      transform: scale(0.985);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+    }
+
+    .song-card.playing {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 16px rgba(0, 255, 102, 0.5);
+    }
+
+    .song-code {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: var(--neon-amber);
+      background: #06060c;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--neon-amber);
+      flex-shrink: 0;
+    }
+
+    .song-thumb {
+      width: 64px;
+      height: 42px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--neon-pink);
+      flex-shrink: 0;
+    }
+
+    .song-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .song-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .song-meta {
+      font-size: 12px;
+      color: var(--neon-cyan);
+      margin-top: 3px;
+    }
+
+    .song-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-play-now, .btn-add-queue {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .btn-play-now {
+      background: var(--neon-pink);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 0, 127, 0.6);
+    }
+
+    .btn-add-queue {
+      background: #1f233b;
+      color: var(--neon-green);
+      border: 1px solid var(--neon-green);
+    }
+
+    /* Barra inferior táctil de reproducción y volumen */
+    .transport-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 6px;
+      border-top: 1px solid #282c47;
+    }
+
+    .transport-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .t-btn {
+      height: 44px;
+      padding: 0 16px;
+      border-radius: 12px;
+      border: 2px solid var(--neon-cyan);
+      background: #0d1324;
+      color: var(--neon-cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+      cursor: pointer;
+    }
+
+    .t-btn:active {
+      background: var(--neon-cyan);
+      color: #000;
+    }
+
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      max-width: 280px;
+    }
+
+    .volume-control input[type="range"] {
+      flex: 1;
+      accent-color: var(--neon-pink);
+      height: 10px;
+    }
+
+    @keyframes ledRainbowFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes chaseBulbs {
+      0% { opacity: 0.35; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1.15); }
+    }
+
+    @keyframes scrollText {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+  </style>
+</head>
+<body>
+  <div class="jukebox-chassis">
+    <!-- Marco exterior de tubos LED neón animados -->
+    <div class="led-tube-frame"></div>
+
+    <!-- Marquesina superior con bombillas LED -->
+    <div class="led-bulbs-row">
+      <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+      <div class="header-title">★ ARCADE JUKEBOX 90s ★</div>
+      <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+    </div>
+
+    <!-- ============================================================
+         PANTALLA SUPERIOR (~22" DE 32"): VIDEO CRT + MARQUESINA
+         ============================================================ -->
+    <section class="video-stage">
+      <div class="now-playing-marquee">
+        <span class="badge-live" id="source-badge">EN ESPERA</span>
+        <div class="marquee-track">
+          <span class="marquee-text" id="marquee-title">TOCA UNA CANCIÓN DE TU CARPETA FYDEOS O BUSCA EN YOUTUBE...</span>
+        </div>
+      </div>
+
+      <div class="crt-screen">
+        <div class="idle-screen" id="idle-screen">
+          <h2>ARCADE JUKEBOX<br>TOUCH EDITION</h2>
+          <p>SELECCIONA UN VIDEO ABAJO PARA INICIAR LA FIESTA</p>
+        </div>
+
+        <!-- Reproductor HTML5 para videos locales de FydeOS -->
+        <video id="local-player" class="hidden" playsinline></video>
+
+        <!-- Contenedor IFrame API para YouTube -->
+        <div id="yt-player-container" class="hidden">
+          <div id="yt-player"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PANEL INFERIOR (~10" DE 32"): ECUALIZADOR + BUSCADOR + LISTA TÁCTIL
+         ============================================================ -->
+    <section class="touch-deck">
+      <!-- Ecualizador LED de 28 bandas -->
+      <div class="equalizer-panel" id="equalizer"></div>
+
+      <!-- Buscador táctil -->
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <input
+            type="search"
+            id="search-input"
+            class="search-input"
+            placeholder="Toca aquí para buscar canción o artista..."
+          />
+          <button class="btn-clear-search" id="btn-clear" title="Limpiar">✕</button>
+        </div>
+        <button class="btn-search" id="btn-search">BUSCAR</button>
+      </div>
+
+      <!-- Selector de modo táctil -->
+      <div class="tabs-row">
+        <button class="tab-btn active-local" id="tab-local">📂 VIDEOS FYDEOS (<span id="local-count">0</span>)</button>
+        <button class="tab-btn" id="tab-yt">▶ YOUTUBE</button>
+        <button class="tab-btn" id="tab-queue">🎵 COLA (<span id="queue-count">0</span>)</button>
+      </div>
+
+      <!-- Lista táctil deslizable -->
+      <div class="song-list" id="song-list"></div>
+
+      <!-- Controles táctiles rápidos -->
+      <div class="transport-bar">
+        <div class="transport-btns">
+          <button class="t-btn" id="btn-play-pause">⏯ PAUSA / PLAY</button>
+          <button class="t-btn" id="btn-next">⏭ SIGUIENTE</button>
+        </div>
+        <div class="volume-control">
+          <span>🔊</span>
+          <input type="range" id="volume-slider" min="0" max="100" value="85" />
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Carga oficial de YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    // Estado global de la Rockola
+    let currentTab = 'local'; // 'local' | 'youtube' | 'queue'
+    let localVideos = [];
+    let youtubeVideos = [];
+    let playQueue = [];
+    let currentTrack = null;
+    let isPlaying = false;
+    let ytPlayer = null;
+    let ytReady = false;
+
+    // Web Audio API para ecualizador real en videos locales
+    let audioCtx = null;
+    let analyser = null;
+    let dataArray = null;
+
+    const localPlayer = document.getElementById('local-player');
+    const ytContainer = document.getElementById('yt-player-container');
+    const idleScreen = document.getElementById('idle-screen');
+    const songListEl = document.getElementById('song-list');
+    const searchInput = document.getElementById('search-input');
+    const marqueeTitle = document.getElementById('marquee-title');
+    const sourceBadge = document.getElementById('source-badge');
+    const eqContainer = document.getElementById('equalizer');
+
+    // Crear 28 barras LED del ecualizador
+    const NUM_BARS = 28;
+    const eqBars = [];
+    for (let i = 0; i < NUM_BARS; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'eq-bar';
+      eqContainer.appendChild(bar);
+      eqBars.push(bar);
+    }
+
+    // Inicializar YouTube Player API
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('yt-player', {
+        height: '100%',
+        width: '100%',
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1,
+          iv_load_policy: 3
+        },
+        events: {
+          onReady: () => {
+            ytReady = true;
+            ytPlayer.setVolume(document.getElementById('volume-slider').value);
+          },
+          onStateChange: (event) => {
+            if (event.data === YT.PlayerState.PLAYING) {
+              isPlaying = true;
+            } else if (event.data === YT.PlayerState.PAUSED) {
+              isPlaying = false;
+            } else if (event.data === YT.PlayerState.ENDED) {
+              playNextInQueue();
+            }
+          }
+        }
+      });
+    }
+
+    // Configurar analizador de audio real para videos locales
+    function initLocalAudioAnalyser() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaElementSource(localPlayer);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+      } catch (e) {
+        console.warn('AudioContext fallback activo:', e);
+      }
+    }
+
+    // Bucle de animación del ecualizador LED
+    function animateEqualizer() {
+      requestAnimationFrame(animateEqualizer);
+
+      if (!isPlaying) {
+        eqBars.forEach(bar => bar.style.height = '10%');
+        return;
+      }
+
+      if (currentTrack?.source === 'local' && analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        for (let i = 0; i < NUM_BARS; i++) {
+          const val = dataArray[i % dataArray.length] || 0;
+          const pct = Math.max(12, Math.min(100, (val / 255) * 100));
+          eqBars[i].style.height = `${pct}%`;
+        }
+      } else {
+        // Simulación rítmica LED para YouTube
+        const t = Date.now() / 120;
+        for (let i = 0; i < NUM_BARS; i++) {
+          const wave = Math.sin(t + i * 0.45) * 35 + Math.cos(t * 1.7 - i * 0.3) * 25 + 45;
+          const pct = Math.max(14, Math.min(100, wave));
+          eqBars[i].style.height = `${pct}%`;
+        }
+      }
+    }
+    animateEqualizer();
+
+    // Cargar videos de la carpeta local de FydeOS
+    async function loadLocalVideos() {
+      try {
+        const res = await fetch('/api/local-videos');
+        const data = await res.json();
+        localVideos = data.videos || [];
+        document.getElementById('local-count').textContent = localVideos.length;
+        if (currentTab === 'local') renderList();
+      } catch (err) {
+        console.error('Error cargando biblioteca local:', err);
+      }
+    }
+
+    // Buscar videos en YouTube
+    async function searchYouTube(query) {
+      if (!query.trim()) return;
+      songListEl.innerHTML = `<div style="text-align:center; padding:30px; color:var(--neon-cyan);">BUSCANDO EN YOUTUBE...</div>`;
+      try {
+        const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        youtubeVideos = data.videos || [];
+        renderList();
+      } catch (err) {
+        songListEl.innerHTML = `<div style="text-align:center; padding:30px; color:var(--neon-pink);">ERROR DE CONEXIÓN CON YOUTUBE</div>`;
+      }
+    }
+
+    // Reproducir una pista seleccionada (Local o YouTube)
+    function playTrack(track) {
+      currentTrack = track;
+      idleScreen.classList.add('hidden');
+      marqueeTitle.textContent = `SONANDO AHORA: ${track.title.toUpperCase()}`;
+
+      if (track.source === 'local') {
+        sourceBadge.textContent = 'FYDEOS LOCAL';
+        sourceBadge.style.background = 'var(--neon-amber)';
+        sourceBadge.style.color = '#000';
+
+        if (ytReady && ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
+        ytContainer.classList.add('hidden');
+        localPlayer.classList.remove('hidden');
+
+        initLocalAudioAnalyser();
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+        localPlayer.src = track.url;
+        localPlayer.play();
+        isPlaying = true;
+      } else {
+        sourceBadge.textContent = 'YOUTUBE LIVE';
+        sourceBadge.style.background = 'var(--neon-pink)';
+        sourceBadge.style.color = '#fff';
+
+        localPlayer.pause();
+        localPlayer.classList.add('hidden');
+        ytContainer.classList.remove('hidden');
+
+        if (ytReady && ytPlayer) {
+          ytPlayer.loadVideoById(track.id);
+          isPlaying = true;
+        }
+      }
+      renderList();
+    }
+
+    // Añadir a la cola de reproducción
+    function addToQueue(track) {
+      playQueue.push(track);
+      document.getElementById('queue-count').textContent = playQueue.length;
+      if (!currentTrack) {
+        playNextInQueue();
+      }
+    }
+
+    function playNextInQueue() {
+      if (playQueue.length > 0) {
+        const next = playQueue.shift();
+        document.getElementById('queue-count').textContent = playQueue.length;
+        playTrack(next);
+      } else if (currentTrack?.source === 'local' && localVideos.length > 0) {
+        // Auto-continuar con el siguiente video local si la cola está vacía
+        const idx = localVideos.findIndex(v => v.id === currentTrack.id);
+        const nextLocal = localVideos[(idx + 1) % localVideos.length];
+        playTrack(nextLocal);
+      }
+    }
+
+    localPlayer.addEventListener('ended', playNextInQueue);
+    localPlayer.addEventListener('play', () => isPlaying = true);
+    localPlayer.addEventListener('pause', () => isPlaying = false);
+
+    // Renderizar lista táctil según pestaña activa
+    function renderList() {
+      const filterText = searchInput.value.trim().toLowerCase();
+      let items = [];
+
+      if (currentTab === 'local') {
+        items = filterText
+          ? localVideos.filter(v => v.title.toLowerCase().includes(filterText) || v.code.includes(filterText))
+          : localVideos;
+      } else if (currentTab === 'youtube') {
+        items = youtubeVideos;
+      } else {
+        items = playQueue;
+      }
+
+      if (items.length === 0) {
+        const msg = currentTab === 'local'
+          ? 'NO HAY VIDEOS EN LA CARPETA "VIDEOS" DE FYDEOS'
+          : currentTab === 'youtube'
+          ? 'ESCRIBE ARRIBA Y PULSA BUSCAR PARA EXPLORAR YOUTUBE'
+          : 'LA COLA DE REPRODUCCIÓN ESTÁ VACÍA';
+        songListEl.innerHTML = `<div style="text-align:center; padding:30px; color:#8b95b5; font-size:14px;">${msg}</div>`;
+        return;
+      }
+
+      songListEl.innerHTML = '';
+      items.forEach((item, index) => {
+        const isCurrent = currentTrack && currentTrack.id === item.id;
+        const card = document.createElement('div');
+        card.className = `song-card ${isCurrent ? 'playing' : ''}`;
+
+        card.innerHTML = `
+          <span class="song-code">${currentTab === 'queue' ? '#' + (index + 1) : item.code}</span>
+          ${item.thumbnail ? `<img class="song-thumb" src="${item.thumbnail}" alt="" />` : ''}
+          <div class="song-info">
+            <div class="song-title">${item.title}</div>
+            <div class="song-meta">${item.source === 'local' ? 'ARCHIVO LOCAL MP4/VIDEO' : `${item.author || 'YouTube'} • ${item.duration || ''}`}</div>
+          </div>
+          <div class="song-actions">
+            <button class="btn-add-queue">+ COLA</button>
+            <button class="btn-play-now">▶ PLAY</button>
+          </div>
+        `;
+
+        card.querySelector('.btn-play-now').addEventListener('click', (e) => {
+          e.stopPropagation();
+          playTrack(item);
+        });
+
+        card.querySelector('.btn-add-queue').addEventListener('click', (e) => {
+          e.stopPropagation();
+          addToQueue(item);
+        });
+
+        card.addEventListener('click', () => playTrack(item));
+        songListEl.appendChild(card);
+      });
+    }
+
+    // Eventos de pestañas
+    function setActiveTab(tab) {
+      currentTab = tab;
+      document.getElementById('tab-local').className = `tab-btn ${tab === 'local' ? 'active-local' : ''}`;
+      document.getElementById('tab-yt').className = `tab-btn ${tab === 'youtube' ? 'active-yt' : ''}`;
+      document.getElementById('tab-queue').className = `tab-btn ${tab === 'queue' ? 'active-queue' : ''}`;
+      renderList();
+    }
+
+    document.getElementById('tab-local').addEventListener('click', () => setActiveTab('local'));
+    document.getElementById('tab-yt').addEventListener('click', () => setActiveTab('youtube'));
+    document.getElementById('tab-queue').addEventListener('click', () => setActiveTab('queue'));
+
+    // Eventos de búsqueda táctil
+    document.getElementById('btn-search').addEventListener('click', () => {
+      if (currentTab === 'youtube') {
+        searchYouTube(searchInput.value);
+      } else {
+        // Si escribe algo y no está en local, buscar automáticamente en YouTube si no hay coincidencias locales
+        const matches = localVideos.filter(v => v.title.toLowerCase().includes(searchInput.value.toLowerCase()));
+        if (matches.length === 0 && searchInput.value.trim()) {
+          setActiveTab('youtube');
+          searchYouTube(searchInput.value);
+        } else {
+          renderList();
+        }
+      }
+    });
+
+    searchInput.addEventListener('input', () => {
+      if (currentTab === 'local') renderList();
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btn-search').click();
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      searchInput.value = '';
+      renderList();
+    });
+
+    // Controles táctiles de Play/Pausa, Siguiente y Volumen
+    document.getElementById('btn-play-pause').addEventListener('click', () => {
+      if (!currentTrack) return;
+      if (currentTrack.source === 'local') {
+        localPlayer.paused ? localPlayer.play() : localPlayer.pause();
+      } else if (ytReady && ytPlayer) {
+        const state = ytPlayer.getPlayerState();
+        state === YT.PlayerState.PLAYING ? ytPlayer.pauseVideo() : ytPlayer.playVideo();
+      }
+    });
+
+    document.getElementById('btn-next').addEventListener('click', playNextInQueue);
+
+    document.getElementById('volume-slider').addEventListener('input', (e) => {
+      const vol = Number(e.target.value);
+      localPlayer.volume = vol / 100;
+      if (ytReady && ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(vol);
+    });
+
+    // Inicialización
+    loadLocalVideos();
+  </script>
+</body>
+</html>
