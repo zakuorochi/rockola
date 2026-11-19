@@ -1,0 +1,13 @@
+{
+  "name": "rockola-90s-totem",
+  "version": "1.0.0",
+  "description": "Rockola 90s LED táctil para tótem 32 pulgadas en FydeOS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "yt-search": "^2.12.1"
+  }
+}
